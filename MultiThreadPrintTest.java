@@ -21,36 +21,36 @@ public class MultiThreadPrintTest {
 		Condition condition2 = lock1.newCondition();
 
 		new Thread(() -> {
-			while(integer.get() < 1001){
-				while(integer.get()%2==0){
-					lock1.lock();
-					try {
-						condition2.signal();
-						condition1.await();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					} finally {
-						lock1.unlock();
-					}
+			while(integer.get()%2 == 1 && integer.get() < 101){
+				lock1.lock();
+				try {
+					condition2.signal();
+					System.out.println("a" + integer.getAndIncrement());
+					System.out.println("1 await before");
+					condition1.await();
+					System.out.println("1 await after");
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} finally {
+					lock1.unlock();
 				}
-				System.out.println("a" + integer.getAndIncrement());
 			}
 		}, "ThreadA").start();
 
 		new Thread(() -> {
-			while(integer.get() < 1001){
-				while(integer.get()%2!=0){
-					lock1.lock();
-					try {
-						condition1.signal();
-						condition2.await();
-					} catch (InterruptedException e) {
-						e.printStackTrace();
-					} finally {
-						lock1.unlock();
-					}
+			while(integer.get()%2 == 0 && integer.get() < 101){
+				lock1.lock();
+				try {
+					condition1.signal();
+					System.out.println("b" + integer.getAndIncrement());
+					System.out.println("2 await before");
+					condition2.await();
+					System.out.println("2 await after");
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				} finally {
+					lock1.unlock();
 				}
-				System.out.println("b" + integer.getAndIncrement());
 			}
 		}, "ThreadB").start();
 	}
@@ -66,11 +66,16 @@ public class MultiThreadPrintTest {
 		Condition condition2 = lock2.newCondition();
 
 		new Thread(() -> {
-			while(integer.get() < 1001){
-				while(integer.get()%2==0){
+			while(integer.get() < 101){
+				while(integer.get()%2 == 1){
+					System.out.println("1 lock");
 					lock1.lock();
 					try {
+						System.out.println("1 await before");
 						condition1.await();
+						System.out.println("1 await after");
+						// even print a[odd], integer increments to even
+						// then condition2 in threadB in awaiting, and condition2 in threadA will try to signal
 						System.out.println("a" + integer.getAndIncrement());
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -78,8 +83,7 @@ public class MultiThreadPrintTest {
 						lock1.unlock();
 					}
 				}
-				// if the threadB do some operations which wasting time,
-				// in the while cycle the condition2 can keep trying to signal it's await
+				// in the while cycle the condition2 will keep trying to signal it's awaiting
 				try {
 					lock2.lock();
 					condition2.signal();
@@ -90,13 +94,16 @@ public class MultiThreadPrintTest {
 		}, "ThreadA").start();
 
 		new Thread(() -> {
-			while(integer.get() < 1001){
-				while(integer.get()%2!=0){
+			while(integer.get() < 101){
+				while(integer.get()%2 == 0){
+					System.out.println("2 lock");
 					lock2.lock();
 					try {
-						// do some operations which wasting time
-						//TimeUnit.MICROSECONDS.sleep(10);
+						System.out.println("2 await before");
 						condition2.await();
+						System.out.println("2 await after");
+						// even print b[even], integer increments to odd
+						// then condition1 in threadA in awaiting, and condition1 in threadB will try to signal
 						System.out.println("b" + integer.getAndIncrement());
 					} catch (InterruptedException e) {
 						e.printStackTrace();
@@ -104,6 +111,7 @@ public class MultiThreadPrintTest {
 						lock2.unlock();
 					}
 				}
+				// in the while cycle the condition1 will keep trying to signal it's awaiting
 				try {
 					lock1.lock();
 					condition1.signal();
@@ -134,7 +142,6 @@ public class MultiThreadPrintTest {
 			}
 		}, "ThreadA").start();
 
-		//线程2-偶数线程
 		new Thread(() -> {
 			while (integer.get() < 101){
 				synchronized (o){
