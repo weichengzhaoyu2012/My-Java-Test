@@ -52,6 +52,7 @@ public class FindMatchingNum {
 
 		System.out.println(key2);
 		int size;
+		// still have some problems
 		for (size = 0; size < num; size++) {
 			if (list1.get(size) == key1 || list2.get(size) == key2) {
 				continue;
