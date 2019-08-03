@@ -22,7 +22,7 @@ public class MultiThreadPrintTest {
 
 		new Thread(() -> {
 			while(integer.get() < 1001){
-				if(integer.get()%2==0){
+				while(integer.get()%2==0){
 					lock1.lock();
 					try {
 						condition2.signal();
@@ -39,7 +39,7 @@ public class MultiThreadPrintTest {
 
 		new Thread(() -> {
 			while(integer.get() < 1001){
-				if(integer.get()%2!=0){
+				while(integer.get()%2!=0){
 					lock1.lock();
 					try {
 						condition1.signal();
@@ -67,7 +67,7 @@ public class MultiThreadPrintTest {
 
 		new Thread(() -> {
 			while(integer.get() < 1001){
-				if(integer.get()%2==0){
+				while(integer.get()%2==0){
 					lock1.lock();
 					try {
 						condition1.await();
@@ -91,10 +91,10 @@ public class MultiThreadPrintTest {
 
 		new Thread(() -> {
 			while(integer.get() < 1001){
-				if(integer.get()%2!=0){
+				while(integer.get()%2!=0){
 					lock2.lock();
 					try {
-						// simulate the operation which wastes time
+						// do some operations which wasting time
 						//TimeUnit.MICROSECONDS.sleep(10);
 						condition2.await();
 						System.out.println("b" + integer.getAndIncrement());
