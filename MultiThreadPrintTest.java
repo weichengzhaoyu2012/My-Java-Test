@@ -22,7 +22,7 @@ public class MultiThreadPrintTest {
 
 		new Thread(() -> {
 			while(integer.get()%2 == 1 && integer.get() < 101){
-				lock1.lock();
+				lock1.lockInterruptibly();
 				try {
 					condition2.signal();
 					System.out.println("a" + integer.getAndIncrement());
@@ -39,7 +39,7 @@ public class MultiThreadPrintTest {
 
 		new Thread(() -> {
 			while(integer.get()%2 == 0 && integer.get() < 101){
-				lock1.lock();
+				lock1.lockInterruptibly();
 				try {
 					condition1.signal();
 					System.out.println("b" + integer.getAndIncrement());
@@ -69,7 +69,7 @@ public class MultiThreadPrintTest {
 			while(integer.get() < 101){
 				while(integer.get()%2 == 1){
 					System.out.println("1 lock");
-					lock1.lock();
+					lock1.lockInterruptibly();
 					try {
 						System.out.println("1 await before");
 						condition1.await();
@@ -84,11 +84,13 @@ public class MultiThreadPrintTest {
 					}
 				}
 				// in the while cycle the condition2 will keep trying to signal it's awaiting
-				try {
-					lock2.lock();
-					condition2.signal();
-				} finally {
-					lock2.unlock();
+				if(integer.get()%2 == 0){
+					lock2.lockInterruptibly();
+					try {
+						condition2.signal();
+					} finally {
+						lock2.unlock();
+					}
 				}
 			}
 		}, "ThreadA").start();
@@ -97,7 +99,7 @@ public class MultiThreadPrintTest {
 			while(integer.get() < 101){
 				while(integer.get()%2 == 0){
 					System.out.println("2 lock");
-					lock2.lock();
+					lock2.lockInterruptibly();
 					try {
 						System.out.println("2 await before");
 						condition2.await();
@@ -112,11 +114,13 @@ public class MultiThreadPrintTest {
 					}
 				}
 				// in the while cycle the condition1 will keep trying to signal it's awaiting
-				try {
-					lock1.lock();
-					condition1.signal();
-				} finally {
-					lock1.unlock();
+				if(integer.get()%2 == 1){
+					lock1.lockInterruptibly();
+					try {
+						condition1.signal();
+					} finally {
+						lock1.unlock();
+					}
 				}
 			}
 		}, "ThreadB").start();
